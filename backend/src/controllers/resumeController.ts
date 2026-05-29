@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { prisma } from '../lib/prisma';
-import { parseWithGemini } from '../lib/gemini';
+import { parseWithAI } from '../lib/gemini';
 
 const pdfParse = require('pdf-parse');
 
@@ -28,8 +28,15 @@ export const parseResume = async (req: FileRequest, res: Response) => {
       return;
     }
 
-    const pdfData = await pdfParse(req.file.buffer);
-    const resumeText = pdfData.text;
+    let resumeText = '';
+    try {
+      const pdfData = await pdfParse(req.file.buffer);
+      resumeText = pdfData.text;
+    } catch (pdfError) {
+      console.error('PDF parse error:', pdfError);
+      res.status(400).json({ error: 'Failed to parse PDF' });
+      return;
+    }
 
     const prompt = `
       Extract structured information from this resume and return ONLY a valid JSON object.
@@ -50,7 +57,7 @@ export const parseResume = async (req: FileRequest, res: Response) => {
       ${resumeText}
     `;
 
-    const parsedText = await parseWithGemini(prompt);
+    const parsedText = await parseWithAI(prompt);
     const cleaned = parsedText.replace(/```json|```/g, '').trim();
     const parsedData = JSON.parse(cleaned);
 

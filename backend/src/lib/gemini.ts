@@ -1,11 +1,23 @@
-import { GoogleGenerativeAI } from '@google/generative-ai';
+export async function parseWithAI(prompt: string): Promise<string> {
+  
+  const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${process.env.GROQ_API_KEY}`
+    },
+    body: JSON.stringify({
+      model: 'llama-3.3-70b-versatile',
+      messages: [{ role: 'user', content: prompt }],
+      temperature: 0.3
+    })
+  });
 
-const genAI = new GoogleGenerativeAI("AIzaSyDZwmruNaJO22Cb-x1I_JGx0yLKN_gn1Yk");
+  const data = await response.json() as any;
 
-export const geminiModel = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
+  if (!response.ok) {
+    throw new Error(`Groq error: ${data.error?.message || 'Unknown error'}`);
+  }
 
-export const parseWithGemini = async (prompt: string): Promise<string> => {
-  const result = await geminiModel.generateContent(prompt);
-  const response = await result.response;
-  return response.text();
-};
+  return data.choices[0].message.content;
+}

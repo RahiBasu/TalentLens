@@ -8,38 +8,35 @@ datasource db {
 }
 
 model User {
-  id        String   @id @default(cuid())
-  clerkId   String   @unique
-  email     String   @unique
-  name      String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  resumes      Resume[]
+  id           String        @id @default(cuid())
+  clerkId      String        @unique
+  email        String        @unique
+  name         String?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
   applications Application[]
+  resumes      Resume[]
 }
 
 model Resume {
-  id        String   @id @default(cuid())
-  userId    String
-  content   String
-  parsedData Json?
-  createdAt DateTime @default(now())
-
-  user         User          @relation(fields: [userId], references: [id])
+  id           String        @id @default(cuid())
+  userId       String
+  content      String
+  parsedData   Json?
+  createdAt    DateTime      @default(now())
   applications Application[]
+  user         User          @relation(fields: [userId], references: [id])
 }
 
 model Job {
-  id          String   @id @default(cuid())
-  title       String
-  company     String
-  description String
-  parsedData  Json?
-  source      String?
-  url         String?
-  createdAt   DateTime @default(now())
-
+  id           String        @id @default(cuid())
+  title        String
+  company      String
+  description  String
+  parsedData   Json?
+  source       String?
+  url          String?
+  createdAt    DateTime      @default(now())
   applications Application[]
 }
 
@@ -53,10 +50,9 @@ model Application {
   notes      String?
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
-
-  user   User   @relation(fields: [userId], references: [id])
-  job    Job    @relation(fields: [jobId], references: [id])
-  resume Resume @relation(fields: [resumeId], references: [id])
+  job        Job      @relation(fields: [jobId], references: [id])
+  resume     Resume   @relation(fields: [resumeId], references: [id])
+  user       User     @relation(fields: [userId], references: [id])
 }
 
 enum Status {

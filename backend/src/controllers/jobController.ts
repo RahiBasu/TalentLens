@@ -1,6 +1,6 @@
 import { Request, Response } from 'express';
 import { prisma } from '../lib/prisma';
-import { parseWithGemini } from '../lib/gemini';
+import { parseWithAI } from '../lib/gemini';
 
 export const parseJob = async (req: Request, res: Response) => {
   try {
@@ -32,7 +32,7 @@ export const parseJob = async (req: Request, res: Response) => {
       ${description}
     `;
 
-    const parsedText = await parseWithGemini(prompt);
+    const parsedText = await parseWithAI(prompt);
     const cleaned = parsedText.replace(/```json|```/g, '').trim();
     const parsedData = JSON.parse(cleaned);
 
