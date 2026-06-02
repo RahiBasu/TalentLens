@@ -12,7 +12,12 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 app.use(cors({
-  origin: ['http://localhost:3000', 'http://localhost:3001'],
+  origin: [
+    'http://localhost:3000',
+    'http://localhost:3001',
+    'https://talent-lens-epx6.vercel.app',
+    'https://talentlens.vercel.app',
+  ],
   credentials: true,
 }));
 app.use(express.json({ limit: '10mb' }));
