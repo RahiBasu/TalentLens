@@ -53,3 +53,42 @@ export const deleteApplication = async (req: Request, res: Response) => {
     res.status(500).json({ error: 'Internal server error' });
   }
 };
+export const createApplication = async (req: Request, res: Response) => {
+  try {
+    const { clerkId, title, company, status } = req.body;
+
+    if (!clerkId || !title || !company) {
+      res.status(400).json({ error: 'clerkId, title and company are required' });
+      return;
+    }
+
+    const user = await prisma.user.findUnique({ where: { clerkId } });
+    if (!user) {
+      res.status(404).json({ error: 'User not found' });
+      return;
+    }
+
+    // Create a bare job without AI parsing
+    const job = await prisma.job.create({
+      data: {
+        title,
+        company,
+        description: `${title} at ${company}`,
+        parsedData: {},
+      },
+    });
+
+    const application = await prisma.application.create({
+  data: {
+    userId: user.id,
+    jobId: job.id,
+    status: status || 'SAVED',
+  } as any,
+});
+
+    res.status(201).json({ application });
+  } catch (error) {
+    console.error('createApplication error:', error);
+    res.status(500).json({ error: 'Internal server error' });
+  }
+};

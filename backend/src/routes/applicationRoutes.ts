@@ -1,8 +1,9 @@
 import { Router } from 'express';
-import { getApplications, updateApplicationStatus, deleteApplication } from '../controllers/applicationController';
+import { getApplications, updateApplicationStatus, deleteApplication, createApplication } from '../controllers/applicationController';
 
 const router = Router();
 
+router.post('/create', createApplication);
 router.get('/:clerkId', getApplications);
 router.patch('/:id', updateApplicationStatus);
 router.delete('/:id', deleteApplication);

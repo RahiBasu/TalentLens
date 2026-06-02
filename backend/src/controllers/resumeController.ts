@@ -22,13 +22,17 @@ export const parseResume = async (req: FileRequest, res: Response) => {
       return;
     }
 
-    const user = await prisma.user.findUnique({ where: { clerkId } });
+    const user = await prisma.user.findUnique({
+      where: { clerkId },
+    });
+
     if (!user) {
       res.status(404).json({ error: 'User not found' });
       return;
     }
 
     let resumeText = '';
+
     try {
       const pdfData = await pdfParse(req.file.buffer);
       resumeText = pdfData.text;
@@ -39,27 +43,79 @@ export const parseResume = async (req: FileRequest, res: Response) => {
     }
 
     const prompt = `
-      Extract structured information from this resume and return ONLY a valid JSON object.
-      No markdown, no backticks, no explanation, no extra text. Just raw JSON.
-      
-      Return this exact structure:
-      {
-        "name": "",
-        "email": "",
-        "phone": "",
-        "skills": [],
-        "experience": [{ "company": "", "role": "", "duration": "", "description": "" }],
-        "education": [{ "institution": "", "degree": "", "year": "" }],
-        "summary": ""
-      }
-      
-      Resume:
-      ${resumeText}
-    `;
+Extract structured information from this resume and return ONLY a valid JSON object.
+No markdown, no backticks, no explanation, no extra text. Just raw JSON.
+
+Return this exact structure:
+
+{
+  "name": "",
+  "email": "",
+  "phone": "",
+  "location": "",
+  "skills": [],
+  "experience": [
+    {
+      "company": "",
+      "role": "",
+      "duration": "",
+      "description": ""
+    }
+  ],
+  "education": [
+    {
+      "institution": "",
+      "degree": "",
+      "year": ""
+    }
+  ],
+  "summary": ""
+}
+
+Rules:
+- location should be the candidate's current city/state/country.
+- Examples:
+  - "Kolkata, India"
+  - "Bangalore, India"
+  - "Mumbai, India"
+  - "New York, USA"
+- If location cannot be determined, return an empty string.
+- skills must be an array of strings.
+- summary should be a concise professional summary.
+
+Resume:
+
+${resumeText}
+`;
 
     const parsedText = await parseWithAI(prompt);
-    const cleaned = parsedText.replace(/```json|```/g, '').trim();
+
+    const cleaned = parsedText
+      .replace(/```json|```/g, '')
+      .trim();
+
     const parsedData = JSON.parse(cleaned);
+
+    // fallback location detection
+    if (!parsedData.location) {
+      const text = resumeText.toLowerCase();
+
+      if (text.includes('kolkata')) {
+        parsedData.location = 'Kolkata, India';
+      } else if (text.includes('bangalore') || text.includes('bengaluru')) {
+        parsedData.location = 'Bangalore, India';
+      } else if (text.includes('mumbai')) {
+        parsedData.location = 'Mumbai, India';
+      } else if (text.includes('delhi')) {
+        parsedData.location = 'Delhi, India';
+      } else if (text.includes('hyderabad')) {
+        parsedData.location = 'Hyderabad, India';
+      } else if (text.includes('chennai')) {
+        parsedData.location = 'Chennai, India';
+      } else if (text.includes('pune')) {
+        parsedData.location = 'Pune, India';
+      }
+    }
 
     const resume = await prisma.resume.create({
       data: {
@@ -80,7 +136,10 @@ export const getResumes = async (req: FileRequest, res: Response) => {
   try {
     const clerkId = req.params.clerkId as string;
 
-    const user = await prisma.user.findUnique({ where: { clerkId } });
+    const user = await prisma.user.findUnique({
+      where: { clerkId },
+    });
+
     if (!user) {
       res.status(404).json({ error: 'User not found' });
       return;
